@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Console Methods Controller</title>
+    <style>
+      body {
+        width: 300px;
+        padding: 10px;
+        font-family: Arial, sans-serif;
+      }
+      .toggle-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .toggle {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+      }
+      .toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 24px;
+      }
+      .slider:before {
+        position: absolute;
+        content: '';
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #2196f3;
+      }
+      input:checked + .slider:before {
+        transform: translateX(26px);
+      }
+      .status {
+        font-size: 12px;
+        color: #666;
+        margin-left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>控制台输出控制器</h3>
+    <div class="toggle-container">
+      <span>console.log</span>
+      <label class="toggle">
+        <input type="checkbox" id="logToggle" />
+        <span class="slider"></span>
+      </label>
+      <span class="status" id="logStatus">log: 已启用</span>
+    </div>
+    <div class="toggle-container">
+      <span>console.info</span>
+      <label class="toggle">
+        <input type="checkbox" id="infoToggle" />
+        <span class="slider"></span>
+      </label>
+      <span class="status" id="infoStatus">info: 已启用</span>
+    </div>
+    <div class="toggle-container">
+      <span>console.warn</span>
+      <label class="toggle">
+        <input type="checkbox" id="warnToggle" />
+        <span class="slider"></span>
+      </label>
+      <span class="status" id="warnStatus">warn: 已启用</span>
+    </div>
+    <button id="jdBtn">京东商品一键评价</button>
+    <script src="popup.js"></script>
+  </body>
+</html>
