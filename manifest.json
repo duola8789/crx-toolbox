@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Console Logger Controller",
+  "name": "crx 工具箱",
   "version": "1.0",
-  "description": "控制控制台日志输出的浏览器插件",
+  "description": "页面小工具：静音控制台日志、京东订单一键评价",
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

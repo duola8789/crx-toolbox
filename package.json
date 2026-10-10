@@ -1,7 +1,7 @@
 {
-  "name": "crx-demo",
+  "name": "crx-toolbox",
   "version": "1.0.0",
-  "description": "",
+  "description": "页面小工具：静音控制台日志、京东订单一键评价",
   "main": "index.js",
   "scripts": {
     "build": "echo 1"
