@@ -1,4 +1,4 @@
-# crx-demo
+# crx-toolbox
 
 一个用于浏览器控制台调试与京东订单评价的 Chrome 扩展（Manifest V3）。
 
@@ -35,7 +35,7 @@
 无需构建，直接以「已解压的扩展程序」加载：
 
 ```bash
-git clone <repo-url> crx-demo
+git clone <repo-url> crx-toolbox
 ```
 
 1. 打开 `chrome://extensions`
