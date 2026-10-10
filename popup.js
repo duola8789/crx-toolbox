@@ -38,8 +38,16 @@ document.addEventListener('DOMContentLoaded', function () {
     statusElements[method].textContent = isDisabled ? `${method}: 已禁用` : `${method}: 已启用`;
   }
 
+  // 京东一键评价：只在 content.js 会响应的评价页可用，改动时须与 content.js 中 window.onload 的分支保持一致
+  const JD_EVALUATE_PAGES = ['myJdcomments/myJdcomment', 'orderVoucher', 'saveCommentSuccess'];
+
   const jdBtn = document.querySelector('#jdBtn');
   if (jdBtn) {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      const url = (tabs[0] && tabs[0].url) || '';
+      jdBtn.disabled = !JD_EVALUATE_PAGES.some(page => url.includes(page));
+    });
+
     jdBtn.addEventListener('click', function () {
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         if (tabs[0]) {
