@@ -91,7 +91,7 @@ npx prettier --write .   # 格式化代码
 
 代码风格由 `.prettierrc` 定义：单引号、`printWidth: 170`、`tabWidth: 2`、`arrowParens: 'avoid'`。
 
-项目当前没有测试、lint 与 CI，`npm run build` 是占位脚本。验证方式为在浏览器中重新加载扩展后手工验证，详见 [AGENTS.md](./AGENTS.md)。
+项目当前没有测试、lint、CI 与构建步骤。验证方式为在浏览器中重新加载扩展后手工验证，详见 [AGENTS.md](./AGENTS.md)。
 
 ## 变更流程
 

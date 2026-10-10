@@ -98,7 +98,7 @@ openspec/       规格驱动变更工作流（见下）
 
 ## 验证方式
 
-项目**没有测试、没有 lint、没有 CI**，`npm run build` 是占位（`echo 1`）。改动后按以下方式手工验证：
+项目**没有测试、没有 lint、没有 CI、也没有构建步骤**（源码即产物，`package.json` 只为 prettier 而存在）。改动后按以下方式手工验证：
 
 1. `chrome://extensions` → 开发者模式 → 「加载已解压的扩展程序」选仓库根目录 → 改动后点「重新加载」。
 2. 打开任意页面，在 DevTools Console 执行 `console.log(1)`；popup 中关闭 `log` 后应无输出。
