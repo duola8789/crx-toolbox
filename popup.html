@@ -65,22 +65,32 @@
 
       /* 标题区 */
       .head h1 {
-        margin: 0 0 3px;
+        margin: 0;
         font-size: 13px;
         font-weight: 600;
         line-height: 1.3;
       }
 
-      .head p {
-        margin: 0;
+      /* 功能分组：两块能力互不相干，用分组标题在界面上也把这件事挑明 */
+      .group {
+        margin-top: 14px;
+      }
+
+      .group + .group {
+        margin-top: 18px;
+      }
+
+      .group-title {
+        margin: 0 0 7px;
         color: var(--ink-dim);
         font-size: 11px;
-        line-height: 1.4;
+        font-weight: 600;
+        letter-spacing: 0.05em;
       }
 
       /* 通道组：三个日志级别共用一块面板，靠分隔线区分 */
       .channels {
-        margin: 12px 0 0;
+        margin: 0;
         border: 1px solid var(--line);
         border-radius: 10px;
         background: var(--row);
@@ -220,7 +230,7 @@
 
       /* 评价操作区：与日志通道分开，用京东红做唯一的重色 */
       .action {
-        margin-top: 12px;
+        margin-top: 0;
       }
 
       #jdBtn {
@@ -308,47 +318,53 @@
   </head>
   <body>
     <main class="panel">
-      <div class="head">
+      <header class="head">
         <h1>crx 工具箱</h1>
-        <p>开关立即生效，并记住你的选择</p>
-      </div>
+      </header>
 
-      <div class="channels" role="group" aria-label="按级别静音控制台输出">
-        <label class="channel" style="--live: var(--log)">
-          <span class="rail" aria-hidden="true"></span>
-          <span class="name">console.log</span>
-          <span class="switch">
-            <input type="checkbox" id="logToggle" role="switch" aria-label="静音 console.log" />
-            <span class="track" aria-hidden="true"></span>
-          </span>
-        </label>
+      <section class="group">
+        <h2 class="group-title" id="consoleGroupTitle">控制台日志</h2>
+        <div class="channels" role="group" aria-labelledby="consoleGroupTitle">
+          <label class="channel" style="--live: var(--log)">
+            <span class="rail" aria-hidden="true"></span>
+            <span class="name">console.log</span>
+            <span class="switch">
+              <input type="checkbox" id="logToggle" role="switch" aria-label="静音 console.log" />
+              <span class="track" aria-hidden="true"></span>
+            </span>
+          </label>
 
-        <label class="channel" style="--live: var(--info)">
-          <span class="rail" aria-hidden="true"></span>
-          <span class="name">console.info</span>
-          <span class="switch">
-            <input type="checkbox" id="infoToggle" role="switch" aria-label="静音 console.info" />
-            <span class="track" aria-hidden="true"></span>
-          </span>
-        </label>
+          <label class="channel" style="--live: var(--info)">
+            <span class="rail" aria-hidden="true"></span>
+            <span class="name">console.info</span>
+            <span class="switch">
+              <input type="checkbox" id="infoToggle" role="switch" aria-label="静音 console.info" />
+              <span class="track" aria-hidden="true"></span>
+            </span>
+          </label>
 
-        <label class="channel" style="--live: var(--warn)">
-          <span class="rail" aria-hidden="true"></span>
-          <span class="name">console.warn</span>
-          <span class="switch">
-            <input type="checkbox" id="warnToggle" role="switch" aria-label="静音 console.warn" />
-            <span class="track" aria-hidden="true"></span>
-          </span>
-        </label>
-      </div>
+          <label class="channel" style="--live: var(--warn)">
+            <span class="rail" aria-hidden="true"></span>
+            <span class="name">console.warn</span>
+            <span class="switch">
+              <input type="checkbox" id="warnToggle" role="switch" aria-label="静音 console.warn" />
+              <span class="track" aria-hidden="true"></span>
+            </span>
+          </label>
+        </div>
+        <p class="note">开关立即生效，并记住你的选择</p>
+      </section>
 
-      <div class="action">
-        <button id="jdBtn">
-          <span class="dot" aria-hidden="true"></span>
-          京东商品一键评价
-        </button>
-        <p class="note">仅在京东评价页生效</p>
-      </div>
+      <section class="group">
+        <h2 class="group-title">京东订单</h2>
+        <div class="action">
+          <button id="jdBtn">
+            <span class="dot" aria-hidden="true"></span>
+            京东商品一键评价
+          </button>
+          <p class="note">仅在京东评价页生效</p>
+        </div>
+      </section>
 
       <div class="sr-only" aria-live="polite">
         <span id="logStatus">log: 已启用</span>
