@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="color-scheme" content="light dark" />
+    <title>AI 评语设置 · crx 工具箱</title>
+    <style>
+      /* 沿用 popup.html 的变量与深色主题约定，两处视觉保持同源 */
+      :root {
+        --ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+        --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+        --surface: #ffffff;
+        --row: #f8f9fb;
+        --row-hover: #f1f3f7;
+        --line: #e5e8ec;
+        --ink: #1a1d21;
+        --ink-dim: #6b7280;
+
+        --live: #64748b;
+        --mute: #c2c8d0;
+
+        --ok: #1a7f4b;
+        --fail: #c0392b;
+        --warn: #b45309;
+        --action: #e1251b;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --surface: #16181c;
+          --row: #1c1f24;
+          --row-hover: #23262c;
+          --line: #2a2e35;
+          --ink: #e7e9ec;
+          --ink-dim: #878e99;
+
+          --live: #94a3b8;
+          --mute: #565c66;
+
+          --ok: #4ade80;
+          --fail: #ff7b6e;
+          --warn: #f2b134;
+          --action: #ff5a4d;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 28px 20px 48px;
+        background: var(--surface);
+        color: var(--ink);
+        font-family: var(--ui);
+        font-size: 13px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .panel {
+        max-width: 560px;
+        margin: 0 auto;
+      }
+
+      .head h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .head p {
+        margin: 6px 0 0;
+        color: var(--ink-dim);
+        font-size: 12px;
+      }
+
+      .group {
+        margin-top: 26px;
+      }
+
+      .group-title {
+        margin: 0 0 9px;
+        color: var(--ink-dim);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+      }
+
+      .fields {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--row);
+        overflow: hidden;
+      }
+
+      .field {
+        padding: 11px 13px;
+      }
+
+      .field + .field {
+        border-top: 1px solid var(--line);
+      }
+
+      .field-label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--ink-dim);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      input[type='text'],
+      input[type='password'],
+      input[type='url'] {
+        width: 100%;
+        height: 32px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--ink);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      input:focus-visible {
+        outline: 2px solid var(--live);
+        outline-offset: 1px;
+      }
+
+      .key-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .key-row input {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .ghost {
+        flex: none;
+        height: 32px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--ink-dim);
+        font-family: var(--ui);
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      .ghost:hover {
+        background: var(--row-hover);
+      }
+
+      .hint {
+        margin: 6px 0 0;
+        color: var(--ink-dim);
+        font-size: 11px;
+      }
+
+      /* 总开关行：开关立即生效，不走下面的显式保存——总开关还要记得按保存太反直觉 */
+      .switch-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--row);
+      }
+
+      .switch-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .switch-name {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .switch-note {
+        display: block;
+        margin-top: 5px;
+        color: var(--ink-dim);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      /* 沿用 popup 里那套开关的形状语言，配色改成正向：亮起 = 已启用 */
+      .switch {
+        position: relative;
+        flex: none;
+        width: 40px;
+        height: 22px;
+        margin-top: 1px;
+      }
+
+      .switch input {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .switch .track {
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: transparent;
+        transition:
+          background 0.2s ease,
+          border-color 0.2s ease;
+      }
+
+      .switch .track::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--mute);
+        transform: translateY(-50%);
+        transition:
+          transform 0.2s ease,
+          background 0.2s ease;
+      }
+
+      .switch input:checked + .track {
+        border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+        background: color-mix(in srgb, var(--ok) 18%, transparent);
+      }
+
+      .switch input:checked + .track::before {
+        background: var(--ok);
+        transform: translate(18px, -50%);
+      }
+
+      .switch input:focus-visible + .track {
+        outline: 2px solid var(--live);
+        outline-offset: 2px;
+      }
+
+      #aiStatus {
+        margin: 9px 0 0;
+        color: var(--ink-dim);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      /* 明文传输告警：只在 base_url 用 http:// 时出现 */
+      .alert {
+        margin: 9px 0 0;
+        padding: 9px 11px;
+        border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--warn) 9%, transparent);
+        color: var(--warn);
+        font-size: 12px;
+      }
+
+      .alert[hidden] {
+        display: none;
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 12px;
+      }
+
+      .btn {
+        height: 34px;
+        padding: 0 16px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--row);
+        color: var(--ink);
+        font-family: var(--ui);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .btn:hover:not(:disabled) {
+        background: var(--row-hover);
+      }
+
+      .btn:focus-visible {
+        outline: 2px solid var(--live);
+        outline-offset: 2px;
+      }
+
+      .btn:disabled {
+        color: var(--ink-dim);
+        cursor: not-allowed;
+      }
+
+      /* 验证是这里唯一的"重"动作，给它唯一的实心色 */
+      #verify {
+        border-color: transparent;
+        background: var(--live);
+        color: var(--surface);
+      }
+
+      #verify:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--live) 85%, var(--ink));
+      }
+
+      #saveHint {
+        color: var(--ink-dim);
+        font-size: 11px;
+      }
+
+      /* 验证结果：两步各自成块，互不覆盖 */
+      #result {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--row);
+        padding: 13px;
+      }
+
+      #result .idle {
+        color: var(--ink-dim);
+        font-size: 12px;
+      }
+
+      .step + .step {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+
+      .step-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .chip {
+        flex: none;
+        padding: 1px 7px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .chip.ok {
+        background: color-mix(in srgb, var(--ok) 16%, transparent);
+        color: var(--ok);
+      }
+
+      .chip.fail {
+        background: color-mix(in srgb, var(--fail) 16%, transparent);
+        color: var(--fail);
+      }
+
+      .chip.skip {
+        background: color-mix(in srgb, var(--mute) 26%, transparent);
+        color: var(--ink-dim);
+      }
+
+      .step-title {
+        font-size: 12px;
+        font-weight: 600;
+        padding-top: 2px;
+      }
+
+      .step-msg {
+        margin: 7px 0 0;
+        font-size: 12px;
+        word-break: break-word;
+      }
+
+      .kv {
+        margin: 7px 0 0;
+        color: var(--ink-dim);
+        font-family: var(--mono);
+        font-size: 11px;
+        word-break: break-all;
+      }
+
+      .kv b {
+        color: var(--ink);
+        font-weight: 500;
+      }
+
+      pre {
+        margin: 7px 0 0;
+        padding: 9px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--ink-dim);
+        font-family: var(--mono);
+        font-size: 11px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 220px;
+        overflow: auto;
+      }
+
+      .models {
+        margin: 7px 0 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .models span {
+        padding: 2px 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--ink-dim);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="panel">
+      <header class="head">
+        <h1>AI 评语设置</h1>
+        <p>配置一个 OpenAI 兼容端点，京东一键评价时会用它实时生成互不相同的评语。留空或不可用时自动降级到本地词池，不影响评价流程。</p>
+      </header>
+
+      <section class="group">
+        <h2 class="group-title">AI 评语</h2>
+        <div class="switch-row">
+          <div class="switch-copy">
+            <span class="switch-name">启用 AI 评语</span>
+            <span class="switch-note">开启后，京东一键评价时会调用下面的端点实时生成互不相同的评语；端点不可用时自动降级到本地词池。</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="aiToggle" role="switch" aria-label="启用 AI 评语" />
+            <span class="track" aria-hidden="true"></span>
+          </label>
+        </div>
+        <p id="aiStatus"></p>
+      </section>
+
+      <!-- 关闭总开关时整体收起；只控制显隐，绝不动存储里已保存的值 -->
+      <div id="aiConfig">
+        <section class="group">
+          <h2 class="group-title">端点配置</h2>
+          <div class="fields">
+            <div class="field">
+              <label class="field-label" for="baseUrl">base_url</label>
+              <input id="baseUrl" type="text" spellcheck="false" autocomplete="off" placeholder="https://api.deepseek.com" />
+              <p class="hint">不要带 <code>/chat/completions</code>；末尾的 <code>/v1</code> 可写可不写，两者都会正确拼接。</p>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="apiKey">api_key</label>
+              <div class="key-row">
+                <input id="apiKey" type="password" spellcheck="false" autocomplete="off" placeholder="sk-..." />
+                <button id="apiKeyReveal" class="ghost" type="button" aria-pressed="false">显示</button>
+              </div>
+              <p class="hint">密钥以明文保存在浏览器本地存储中，仅由扩展的后台脚本读取。</p>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="model">model</label>
+              <input id="model" type="text" spellcheck="false" autocomplete="off" list="modelList" placeholder="deepseek-flash" />
+              <datalist id="modelList"></datalist>
+              <p class="hint">点击「验证」成功后，这里会列出端点提供的可用模型。</p>
+            </div>
+          </div>
+
+          <p id="insecureWarn" class="alert" hidden>base_url 使用 http:// 明文协议，api_key 将以明文在网络中传输。请确认这是本机或内网端点。</p>
+
+          <div class="actions">
+            <button id="save" class="btn" type="button">保存</button>
+            <button id="verify" class="btn" type="button">验证</button>
+            <span id="saveHint"></span>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2 class="group-title">验证结果</h2>
+          <div id="result" aria-live="polite">
+            <span class="idle">尚未验证。点「验证」会先查密钥与模型列表，再发一次极小生成请求。</span>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>
