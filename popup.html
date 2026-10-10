@@ -25,6 +25,7 @@
         --info: #1a73e8;
         --warn: #b45309;
         --action: #e1251b;
+        --ok: #1a7f4b;
       }
 
       @media (prefers-color-scheme: dark) {
@@ -43,6 +44,7 @@
           --info: #6ea8ff;
           --warn: #f2b134;
           --action: #ff5a4d;
+          --ok: #4ade80;
         }
       }
 
@@ -253,13 +255,6 @@
           border-color 0.15s ease;
       }
 
-      #jdBtn .dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--action);
-      }
-
       #jdBtn:not(:disabled):hover {
         border-color: color-mix(in srgb, var(--action) 50%, var(--line));
         background: color-mix(in srgb, var(--action) 6%, var(--row));
@@ -282,8 +277,39 @@
         cursor: not-allowed;
       }
 
-      #jdBtn:disabled .dot {
-        background: var(--mute);
+      /* AI 状态点：就一个圈，圈里 AI 两个字，只用边框颜色表意。
+         绿 = 最近一次验证通过；黄 = 配了但没验过/没验过；未配置或 AI 关闭时整块不出现。
+         刻意不做成可点的东西——AI 的开关与配置都在设置页。 */
+      .ai-badge {
+        display: flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        width: 17px;
+        height: 17px;
+        border: 1.5px solid var(--mute);
+        border-radius: 50%;
+        color: var(--mute);
+        font-family: var(--mono);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+
+      /* 类选择器的 display 会盖掉 UA 的 [hidden]，必须显式写回来 */
+      .ai-badge[hidden] {
+        display: none;
+      }
+
+      .ai-badge[data-state='unverified'] {
+        border-color: var(--warn);
+        color: var(--warn);
+      }
+
+      .ai-badge[data-state='ready'] {
+        border-color: var(--ok);
+        color: var(--ok);
       }
 
       .note {
@@ -359,7 +385,7 @@
         <h2 class="group-title">京东订单</h2>
         <div class="action">
           <button id="jdBtn">
-            <span class="dot" aria-hidden="true"></span>
+            <span class="ai-badge" id="aiBadge" aria-hidden="true" hidden>AI</span>
             京东商品一键评价
           </button>
           <p class="note">仅在京东评价页生效</p>
@@ -370,6 +396,7 @@
         <span id="logStatus">log: 已启用</span>
         <span id="infoStatus">info: 已启用</span>
         <span id="warnStatus">warn: 已启用</span>
+        <span id="aiStatusText">AI 评语状态未知</span>
       </div>
     </main>
 
