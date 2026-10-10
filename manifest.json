@@ -1,27 +1,37 @@
 {
-  "name": "MyCrxDemo",
-  "version": "1.0",
   "manifest_version": 3,
-  "description": "星言星言，有钱有闲",
-  "icons": {
-    "16": "src/assets/icon.png",
-    "32": "src/assets/icon.png",
-    "48": "src/assets/icon.png",
-    "128": "src/assets/icon.png"
-  },
-  "background": {
-    "service_worker": "src/scripts/background.js"
-  },
-  "permissions": ["storage", "activeTab", "scripting", "alarms", "downloads"],
+  "name": "Console Logger Controller",
+  "version": "1.0",
+  "description": "控制控制台日志输出的浏览器插件",
   "action": {
-    "default_popup": "src/pages/popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "src/assets/icon.png",
+      "48": "src/assets/icon.png",
+      "128": "src/assets/icon.png"
+    }
+  },
+  "permissions": ["storage", "activeTab", "scripting", "webNavigation"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
   },
   "content_scripts": [
-    { "matches": ["<all_urls>"], "js": ["src/utils/index.js"] },
-    { "matches": ["https://portal.qiniu.com/*"], "js": ["src/scripts/content-scripts/qiniu.js"] }
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
   ],
-  "chrome_url_overrides": {
-    "history": "src/pages/overrides.html"
-  },
-  "options_page": "src/pages/options.html"
+  "web_accessible_resources": [
+    {
+      "resources": ["injected.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "16": "src/assets/icon.png",
+    "48": "src/assets/icon.png",
+    "128": "src/assets/icon.png"
+  }
 }
