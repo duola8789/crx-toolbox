@@ -1,0 +1,828 @@
+/* ==========================================================================
+   知乎文档视图（popup 里的「文档视图」开关）
+
+   注入方式：manifest content_scripts 的 css，匹配 *://*.zhihu.com/*
+   生效条件：content script 给 <html> 加上 data-crx-zhihu-camo 属性
+   关闭开关时属性被移除，本文件所有规则立即失效，页面恢复原样。
+
+   选择器维护：知乎使用「稳定语义类名 + 构建哈希类名」混用，这里只依赖
+   语义类名与带 * 的结构匹配；改版后若某个元素没被隐藏，页面仍然可读，
+   只需在对应区块补选择器，不要改成删除节点。
+   ========================================================================== */
+
+html[data-crx-zhihu-camo] {
+  --crx-bg: #ffffff;
+  --crx-surface: #f7f8fa;
+  --crx-surface-2: #f2f3f5;
+  --crx-line: #e5e6eb;
+  --crx-text: #1f2329;
+  --crx-muted: #646a73;
+  --crx-accent: #3370ff;
+  --crx-body-size: 15px;
+  --crx-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --crx-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+
+  background: var(--crx-bg) !important;
+  color-scheme: light;
+}
+
+html[data-crx-zhihu-camo] body {
+  padding-top: 44px !important;
+  background: var(--crx-bg) !important;
+  color: var(--crx-text) !important;
+  font-family: var(--crx-ui) !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 让知乎的应用壳变成居中的单栏文档 */
+html[data-crx-zhihu-camo] #root {
+  max-width: 1080px !important;
+  margin: 0 auto !important;
+  padding: 0 28px !important;
+  background: transparent !important;
+  box-sizing: border-box !important;
+}
+
+html[data-crx-zhihu-camo] .App,
+html[data-crx-zhihu-camo] .App-main {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: transparent !important;
+  box-sizing: border-box !important;
+}
+
+/* 主容器：隐藏侧栏后不再保留原来的定宽与浮动 */
+html[data-crx-zhihu-camo] .Topstory-container,
+html[data-crx-zhihu-camo] .Question-main,
+html[data-crx-zhihu-camo] .Profile-main,
+html[data-crx-zhihu-camo] .SearchMain,
+html[data-crx-zhihu-camo] .SearchMain-container {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+html[data-crx-zhihu-camo] .Topstory-mainColumn,
+html[data-crx-zhihu-camo] .Question-mainColumn,
+html[data-crx-zhihu-camo] .Profile-mainColumn,
+html[data-crx-zhihu-camo] .SearchMain-column,
+html[data-crx-zhihu-camo] .Post-Main {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+/* --------------------------------------------------------------------------
+   品牌与社交特征：全部只做 display:none，不删除节点
+   -------------------------------------------------------------------------- */
+
+/* 顶部导航、Logo、搜索、消息、用户菜单 */
+html[data-crx-zhihu-camo] .AppHeader,
+html[data-crx-zhihu-camo] .MobileAppHeader,
+html[data-crx-zhihu-camo] .AppHeader-inner,
+html[data-crx-zhihu-camo] .AppHeader-logo,
+html[data-crx-zhihu-camo] .AppHeader-nav,
+html[data-crx-zhihu-camo] .AppHeader-searchBox,
+html[data-crx-zhihu-camo] .AppHeader-profile,
+html[data-crx-zhihu-camo] .AppHeader-notifications,
+html[data-crx-zhihu-camo] .AppHeader-Tabs,
+html[data-crx-zhihu-camo] .AppHeader-userInfo {
+  display: none !important;
+}
+
+/* 左侧/右侧栏、右侧推荐模块与广告 */
+html[data-crx-zhihu-camo] .LeftSideBar,
+html[data-crx-zhihu-camo] .SideBar,
+html[data-crx-zhihu-camo] .Topstory-sideBar,
+html[data-crx-zhihu-camo] .TopstorySideBar,
+html[data-crx-zhihu-camo] .Topstory-tabs,
+html[data-crx-zhihu-camo] .Topstory-nav,
+html[data-crx-zhihu-camo] .Topstory-menu,
+html[data-crx-zhihu-camo] .QuestionHeader-side,
+html[data-crx-zhihu-camo] .Question-sideColumn,
+html[data-crx-zhihu-camo] .QuestionSidebar,
+html[data-crx-zhihu-camo] .Profile-sideColumn,
+html[data-crx-zhihu-camo] .Profile-navBar,
+html[data-crx-zhihu-camo] .SearchSideBar,
+html[data-crx-zhihu-camo] .SearchMain-sideColumn,
+html[data-crx-zhihu-camo] .Post-SideActions,
+html[data-crx-zhihu-camo] .Recommendations,
+html[data-crx-zhihu-camo] .HotList,
+html[data-crx-zhihu-camo] .Commercial,
+html[data-crx-zhihu-camo] .MCNLinkCard,
+html[data-crx-zhihu-camo] .Pc-ad,
+html[data-crx-zhihu-camo] .Ads,
+html[data-crx-zhihu-camo] .Adblock,
+html[data-crx-zhihu-camo] .GlobalSideBar,
+html[data-crx-zhihu-camo] .GlobalSideBar-creator,
+html[data-crx-zhihu-camo] .CreatorEntrance,
+html[data-crx-zhihu-camo] .ProfileSideCreator {
+  display: none !important;
+}
+
+/* 首页右侧栏使用哈希类名，按容器结构兜底隐藏 */
+html[data-crx-zhihu-camo] .Topstory-container > :not(.Topstory-mainColumn) {
+  display: none !important;
+}
+
+/* 提问/写想法入口：整个 WriteArea 是社区编辑器，不属于文档正文 */
+html[data-crx-zhihu-camo] .WriteArea {
+  display: none !important;
+}
+
+/* 数据加载时的白色骨架屏 / loading */
+html[data-crx-zhihu-camo] .skeleton,
+html[data-crx-zhihu-camo] [class*='skeleton'],
+html[data-crx-zhihu-camo] [class*='Skeleton'],
+html[data-crx-zhihu-camo] .Card:has(.skeleton),
+html[data-crx-zhihu-camo] .Card:has([class*='skeleton']),
+html[data-crx-zhihu-camo] .LoadingBar,
+html[data-crx-zhihu-camo] .ModalLoading {
+  display: none !important;
+}
+
+/* 右下角悬浮的 AI / 回到顶部按钮 */
+html[data-crx-zhihu-camo] .CornerButtons {
+  display: none !important;
+}
+
+/* 收录于某个合集 / 盐选合集的入口 */
+html[data-crx-zhihu-camo] a[href*='/collection/'],
+html[data-crx-zhihu-camo] [class*='Collection'],
+html[data-crx-zhihu-camo] [class*='collection'],
+html[data-crx-zhihu-camo] [class*='Collect'],
+html[data-crx-zhihu-camo] [class*='collect'],
+html[data-crx-zhihu-camo] [aria-label*='收录'],
+html[data-crx-zhihu-camo] [title*='收录'] {
+  display: none !important;
+}
+
+/* 「1302 人赞同了该回答」「发布于/编辑于」等社区元信息 */
+html[data-crx-zhihu-camo] .ContentItem-status,
+html[data-crx-zhihu-camo] .ContentItem-annotation,
+html[data-crx-zhihu-camo] [class*='ContentItem-status'],
+html[data-crx-zhihu-camo] [class*='ContentItem-annotation'],
+html[data-crx-zhihu-camo] [class*='VoteCount'],
+html[data-crx-zhihu-camo] [class*='voteCount'] {
+  display: none !important;
+}
+
+/* 作者操作栏：赞同/反对、评论、收藏、喜欢、分享、更多、收起，整条隐藏。
+   注意不要隐藏 .ContentItem-more：它是正文里的「阅读全文」按钮，不是操作栏。 */
+html[data-crx-zhihu-camo] .ContentItem-actions,
+html[data-crx-zhihu-camo] .AnswerItem-actions,
+html[data-crx-zhihu-camo] .QuestionHeader-actions,
+html[data-crx-zhihu-camo] .QuestionButtonGroup,
+html[data-crx-zhihu-camo] .Post-SideActions,
+html[data-crx-zhihu-camo] .VoteButton,
+html[data-crx-zhihu-camo] [class*='ContentItem-actions'],
+html[data-crx-zhihu-camo] [class*='AnswerItem-actions'],
+html[data-crx-zhihu-camo] [class*='CommentItem-actions'] {
+  display: none !important;
+}
+
+/* 阅读全文/收起正文：保留按钮，只把它压成弱化的文字操作 */
+html[data-crx-zhihu-camo] .ContentItem-more {
+  display: inline-flex !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--crx-muted) !important;
+}
+
+/* 关注、邀请回答、写回答等社交动作 */
+html[data-crx-zhihu-camo] .FollowButton,
+html[data-crx-zhihu-camo] .Button--follow,
+html[data-crx-zhihu-camo] .QuestionFollowStatus,
+html[data-crx-zhihu-camo] .QuestionInvitation,
+html[data-crx-zhihu-camo] .WriteAnswer,
+html[data-crx-zhihu-camo] [class*='FollowButton'] {
+  display: none !important;
+}
+
+/* 头像与徽章；作者名保留为弱化署名 */
+html[data-crx-zhihu-camo] .AuthorInfo-avatar,
+html[data-crx-zhihu-camo] .Avatar,
+html[data-crx-zhihu-camo] .AuthorInfo-badge,
+html[data-crx-zhihu-camo] .Badge,
+html[data-crx-zhihu-camo] .UserBadge,
+html[data-crx-zhihu-camo] [class*='AuthorInfo-avatar'],
+html[data-crx-zhihu-camo] [class*='AuthorInfo-badge'] {
+  display: none !important;
+}
+
+/* 作者名不再响应鼠标：避免悬浮触发作者名片；已打开的弹层也一并隐藏 */
+html[data-crx-zhihu-camo] .AuthorInfo,
+html[data-crx-zhihu-camo] .AuthorInfo * {
+  pointer-events: none !important;
+}
+
+html[data-crx-zhihu-camo] .Popover,
+html[data-crx-zhihu-camo] .UserHoverCard,
+html[data-crx-zhihu-camo] [class*='HoverCard'],
+html[data-crx-zhihu-camo] [class*='UserHover'],
+html[data-crx-zhihu-camo] [class*='UserCard'],
+html[data-crx-zhihu-camo] [class*='ProfileCard'],
+html[data-crx-zhihu-camo] [class*='AuthorCard'],
+html[data-crx-zhihu-camo] [role='tooltip'],
+html[data-crx-zhihu-camo] [role='dialog'] {
+  display: none !important;
+}
+
+/* 未登录时的登录页：至少去掉 Logo 与页脚品牌，表单本身保留 */
+html[data-crx-zhihu-camo] .SignFlowHomepage-logo,
+html[data-crx-zhihu-camo] .SignFlowHomepage-footer,
+html[data-crx-zhihu-camo] .SignFlowHomepage-orgLink {
+  display: none !important;
+}
+
+html[data-crx-zhihu-camo] .SignFlowHomepage,
+html[data-crx-zhihu-camo] .SignFlowHomepage-content {
+  background: transparent !important;
+  color: var(--crx-text) !important;
+}
+
+/* 版权页脚 */
+html[data-crx-zhihu-camo] .ZhihuRights,
+html[data-crx-zhihu-camo] .App-footer,
+html[data-crx-zhihu-camo] .SiteFooter,
+html[data-crx-zhihu-camo] .Footer {
+  display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   配色与排版
+   -------------------------------------------------------------------------- */
+
+html[data-crx-zhihu-camo] .ContentItem,
+html[data-crx-zhihu-camo] .List-item,
+html[data-crx-zhihu-camo] .Feed,
+html[data-crx-zhihu-camo] .TopstoryItem,
+html[data-crx-zhihu-camo] .QuestionHeader,
+html[data-crx-zhihu-camo] .AnswerItem,
+html[data-crx-zhihu-camo] .Post-Main,
+html[data-crx-zhihu-camo] .CommentItem,
+html[data-crx-zhihu-camo] .Card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--crx-text) !important;
+}
+
+/* 信息流外层卡片容器也去掉阴影与边框 */
+html[data-crx-zhihu-camo] .Topstory-mainColumn,
+html[data-crx-zhihu-camo] .Topstory-mainColumnCard,
+html[data-crx-zhihu-camo] .Topstory-content,
+html[data-crx-zhihu-camo] #TopstoryContent {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* 卡片之间只去掉边框，保留原有上下间距 */
+html[data-crx-zhihu-camo] .ContentItem + .ContentItem,
+html[data-crx-zhihu-camo] .List-item + .List-item,
+html[data-crx-zhihu-camo] .AnswerItem + .AnswerItem {
+  border-top: 0 !important;
+  padding-top: 28px !important;
+}
+
+html[data-crx-zhihu-camo] .RichText,
+html[data-crx-zhihu-camo] .RichContent,
+html[data-crx-zhihu-camo] .Post-RichText,
+html[data-crx-zhihu-camo] .QuestionHeader-title,
+html[data-crx-zhihu-camo] .QuestionHeader-detail,
+html[data-crx-zhihu-camo] .ContentItem-title,
+html[data-crx-zhihu-camo] .Post-Title,
+html[data-crx-zhihu-camo] .SearchResult-title,
+html[data-crx-zhihu-camo] .CommentContent {
+  color: var(--crx-text) !important;
+  font-size: var(--crx-body-size) !important;
+}
+
+html[data-crx-zhihu-camo] .RichText p,
+html[data-crx-zhihu-camo] .RichContent p,
+html[data-crx-zhihu-camo] .Post-RichText p,
+html[data-crx-zhihu-camo] .CommentContent p {
+  color: var(--crx-text) !important;
+  line-height: 1.85 !important;
+}
+
+html[data-crx-zhihu-camo] .RichText h1,
+html[data-crx-zhihu-camo] .RichText h2,
+html[data-crx-zhihu-camo] .RichText h3,
+html[data-crx-zhihu-camo] .RichText h4,
+html[data-crx-zhihu-camo] .RichContent h1,
+html[data-crx-zhihu-camo] .RichContent h2,
+html[data-crx-zhihu-camo] .RichContent h3,
+html[data-crx-zhihu-camo] .Post-RichText h1,
+html[data-crx-zhihu-camo] .Post-RichText h2,
+html[data-crx-zhihu-camo] .Post-RichText h3 {
+  color: var(--crx-text) !important;
+  letter-spacing: -0.01em !important;
+}
+
+html[data-crx-zhihu-camo] a {
+  color: var(--crx-accent) !important;
+}
+
+/* 标题链接改用正文色，避免整屏最亮的是问题标题的蓝色 */
+html[data-crx-zhihu-camo] .ContentItem-title a,
+html[data-crx-zhihu-camo] .QuestionHeader-title a,
+html[data-crx-zhihu-camo] .Post-Title a,
+html[data-crx-zhihu-camo] .SearchResult-title a {
+  color: var(--crx-text) !important;
+}
+
+html[data-crx-zhihu-camo] .ContentItem-meta,
+html[data-crx-zhihu-camo] .ContentItem-time,
+html[data-crx-zhihu-camo] .QuestionHeader-topics,
+html[data-crx-zhihu-camo] .TopicTag,
+html[data-crx-zhihu-camo] .AuthorInfo-name,
+html[data-crx-zhihu-camo] .UserLink-link,
+html[data-crx-zhihu-camo] .Post-Sub,
+html[data-crx-zhihu-camo] .SearchResult-excerpt {
+  color: var(--crx-muted) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+}
+
+/* 评论区：回答里的热评卡、评论列表与评论输入区统一转深色 */
+html[data-crx-zhihu-camo] [class*='Comment'] {
+  background-color: transparent !important;
+  color: var(--crx-text) !important;
+  border-color: var(--crx-line) !important;
+  box-shadow: none !important;
+}
+
+/* 评论 / 热评卡整体隐藏 */
+html[data-crx-zhihu-camo] .Comments,
+html[data-crx-zhihu-camo] .CommentList,
+html[data-crx-zhihu-camo] .CommentItem,
+html[data-crx-zhihu-camo] .CommentItemV2,
+html[data-crx-zhihu-camo] .RichContent--hasHotComment > div[tabindex='0'],
+html[data-crx-zhihu-camo] .RichContent--hasHotComment div[tabindex='0']:has(a[href*='/people/'] img),
+html[data-crx-zhihu-camo] .ContentItem > div[tabindex='0']:has(a[href*='/people/'] img) {
+  display: none !important;
+}
+
+html[data-crx-zhihu-camo] [class*='Comment'] a {
+  color: var(--crx-muted) !important;
+}
+
+/* 新版评论区使用哈希类名，按「tabindex=0 + 作者头像链接」的结构识别并转深色 */
+html[data-crx-zhihu-camo] div[tabindex='0']:has(a[href*='/people/'] img),
+html[data-crx-zhihu-camo] div[tabindex='0']:has(a[href*='/people/'] img) * {
+  background-color: transparent !important;
+  color: var(--crx-text) !important;
+  border-color: var(--crx-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-crx-zhihu-camo] div[tabindex='0']:has(a[href*='/people/'] img) a {
+  color: var(--crx-muted) !important;
+}
+
+html[data-crx-zhihu-camo] .QuestionHeader-title,
+html[data-crx-zhihu-camo] .Post-Title {
+  font-size: var(--crx-body-size) !important;
+  line-height: 1.85 !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+  margin: 28px 0 14px !important;
+}
+
+html[data-crx-zhihu-camo] .ContentItem-title {
+  font-size: var(--crx-body-size) !important;
+  line-height: 1.85 !important;
+  font-weight: 650 !important;
+}
+
+html[data-crx-zhihu-camo] .RichText pre,
+html[data-crx-zhihu-camo] .RichContent pre,
+html[data-crx-zhihu-camo] .Post-RichText pre {
+  background: var(--crx-surface-2) !important;
+  border: 1px solid var(--crx-line) !important;
+  border-radius: 8px !important;
+  color: var(--crx-text) !important;
+}
+
+html[data-crx-zhihu-camo] code {
+  font-family: var(--crx-mono) !important;
+}
+
+html[data-crx-zhihu-camo] .Button,
+html[data-crx-zhihu-camo] input,
+html[data-crx-zhihu-camo] textarea {
+  background: var(--crx-surface) !important;
+  color: var(--crx-text) !important;
+  border-color: var(--crx-line) !important;
+}
+
+/* 标题前不再显示序号或章节标签，保持干净的问题/文章标题 */
+
+/* 文档视图下不展示信息流封面与视频；正文里的图片交给「精简图片」 */
+html[data-crx-zhihu-camo] .RichContent-cover,
+html[data-crx-zhihu-camo] .RichContent-cover-inner,
+html[data-crx-zhihu-camo] .ContentItem-cover,
+html[data-crx-zhihu-camo] .Video,
+html[data-crx-zhihu-camo] .Video-player,
+html[data-crx-zhihu-camo] .ZVideoItem,
+html[data-crx-zhihu-camo] .ZVideoItem-video,
+html[data-crx-zhihu-camo] video,
+html[data-crx-zhihu-camo] [class*='Video'],
+html[data-crx-zhihu-camo] [class*='video'],
+html[data-crx-zhihu-camo] [aria-label*='视频'],
+html[data-crx-zhihu-camo] [title*='视频'] {
+  display: none !important;
+}
+
+/* JS 识别出的视频播放器外层容器 */
+html[data-crx-zhihu-camo] .crx-camo-hide-video {
+  display: none !important;
+}
+
+/* 视频播放器被隐藏后，正文里承载它的顶层媒体块也折叠，避免黑底或空占位 */
+html[data-crx-zhihu-camo] :is(.RichContent, .Post-RichText, .RichText) > :has(video, iframe) {
+  display: none !important;
+}
+
+/* 伪文档外壳：页眉、架构图、页脚
+   -------------------------------------------------------------------------- */
+
+html[data-crx-zhihu-camo] .crx-camo-top {
+  display: block !important;
+  max-width: 1080px !important;
+  margin: 0 auto !important;
+  padding: 0 28px !important;
+  box-sizing: border-box !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-header {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 2147483000 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  height: 44px !important;
+  padding: 0 24px !important;
+  border-bottom: 1px solid var(--crx-line) !important;
+  background: var(--crx-bg) !important;
+  color: var(--crx-muted) !important;
+  font-family: var(--crx-mono) !important;
+  pointer-events: none !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-eyebrow {
+  color: var(--crx-accent) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-path {
+  color: var(--crx-muted) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.04em !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-diagram {
+  margin: 0 !important;
+  padding: 30px 0 26px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+/* 长正文中间随机插入的同一份架构图 */
+html[data-crx-zhihu-camo] .crx-camo-inline-diagram {
+  margin: 30px 0 !important;
+  padding: 24px 0 !important;
+  border: 0 !important;
+}
+
+/* 卡片内部底部的紧凑架构图（只改卡片高度，不新增列表项） */
+html[data-crx-zhihu-camo] .crx-camo-card-diagram {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 18px 0 8px !important;
+  padding: 16px 0 !important;
+  border: 0 !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-card-diagram .crx-camo-box-subtext,
+html[data-crx-zhihu-camo] .crx-camo-card-diagram .crx-camo-edge-label {
+  display: none !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-card-diagram .crx-camo-box-text {
+  font-size: 17px !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-section-label {
+  margin-bottom: 14px !important;
+  color: var(--crx-accent) !important;
+  font-family: var(--crx-mono) !important;
+  font-size: 12px !important;
+  letter-spacing: 0.12em !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-diagram svg {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-box {
+  fill: var(--crx-surface) !important;
+  stroke: var(--crx-line) !important;
+  stroke-width: 1.5 !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-box-text {
+  fill: var(--crx-text) !important;
+  font-family: var(--crx-mono) !important;
+  font-size: 13px !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-box-subtext {
+  fill: var(--crx-muted) !important;
+  font-family: var(--crx-mono) !important;
+  font-size: 10px !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-edge-label {
+  fill: var(--crx-muted) !important;
+  font-family: var(--crx-mono) !important;
+  font-size: 10px !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-arrow {
+  stroke: var(--crx-muted) !important;
+  stroke-width: 1.5 !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-arrow-head {
+  fill: var(--crx-muted) !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-footer {
+  display: block !important;
+  max-width: 1080px !important;
+  margin: 48px auto 0 !important;
+  padding: 20px 28px 48px !important;
+  border-top: 1px solid var(--crx-line) !important;
+  color: var(--crx-muted) !important;
+  font-family: var(--crx-mono) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.08em !important;
+}
+
+/* --------------------------------------------------------------------------
+   左侧团队空间侧边栏（参考 POPO 文档）：浅色固定左栏，内容整体右移
+   -------------------------------------------------------------------------- */
+
+html[data-crx-zhihu-camo] #root,
+html[data-crx-zhihu-camo] .crx-camo-top,
+html[data-crx-zhihu-camo] .crx-camo-footer {
+  margin-left: max(300px, calc((100vw - 1080px) / 2)) !important;
+  margin-right: auto !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc {
+  position: fixed !important;
+  top: 44px !important;
+  bottom: 0 !important;
+  left: max(16px, calc((100vw - 1080px) / 2 - 296px)) !important;
+  z-index: 2147482000 !important;
+  width: 260px !important;
+  box-sizing: border-box !important;
+  padding: 14px 12px 18px !important;
+  border-right: 1px solid #e5e6eb !important;
+  background: #f7f8fa !important;
+  color: #1f2329 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.02) !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc::-webkit-scrollbar {
+  display: none !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-breadcrumb {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 0 0 12px 2px !important;
+  color: #8f959e !important;
+  font-size: 11px !important;
+  white-space: nowrap !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-sep {
+  color: #c2c6cc !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-team {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 2px 2px 14px !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-avatar {
+  display: inline-flex !important;
+  flex: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: #f5a623 !important;
+  color: #ffffff !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-team-name {
+  flex: 1 !important;
+  color: #1f2329 !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-team > .crx-camo-toc-chevron {
+  color: #8f959e !important;
+  font-size: 14px !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-search {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 30px !important;
+  margin: 0 0 12px !important;
+  padding: 0 10px !important;
+  border-radius: 6px !important;
+  background: #eff0f1 !important;
+  color: #8f959e !important;
+  font-size: 12px !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-search .crx-camo-toc-icon {
+  color: #8f959e !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-height: 30px !important;
+  padding: 0 8px !important;
+  border-radius: 6px !important;
+  color: #1f2329 !important;
+  white-space: nowrap !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-row:hover {
+  background: #eff0f1 !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-icon {
+  flex: none !important;
+  width: 14px !important;
+  height: 14px !important;
+  color: #646a73 !important;
+  fill: none !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-icon path {
+  fill: none !important;
+  stroke: currentColor !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-folder {
+  color: #d9a441 !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-doc-icon {
+  color: #3370ff !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-chevron {
+  color: #8f959e !important;
+  transition: transform 0.15s ease !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-item.is-open > .crx-camo-toc-row .crx-camo-toc-chevron {
+  transform: rotate(90deg) !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-icon-spacer {
+  display: inline-block !important;
+  flex: none !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin: 2px 0 6px !important;
+  padding: 0 6px !important;
+  color: #646a73 !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-header-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-header-label .crx-camo-toc-icon {
+  color: #646a73 !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-actions {
+  color: #8f959e !important;
+  font-size: 12px !important;
+  letter-spacing: 0.08em !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-tree {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-item > .crx-camo-toc-tree {
+  padding-left: 14px !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-item {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-item > .crx-camo-toc-row {
+  min-height: 28px !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-label {
+  flex: 1 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-item.is-active > .crx-camo-toc-row {
+  background: #e1eaff !important;
+  color: #245bdb !important;
+  font-weight: 500 !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-item.is-active > .crx-camo-toc-row .crx-camo-toc-icon {
+  color: #245bdb !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-footer {
+  margin-top: 16px !important;
+  padding-top: 12px !important;
+  border-top: 1px solid #e5e6eb !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-footer .crx-camo-toc-row {
+  min-height: 30px !important;
+}
+
+html[data-crx-zhihu-camo] .crx-camo-toc-footer .crx-camo-toc-chevron {
+  margin-left: auto !important;
+}
+
+@media (max-width: 1439px) {
+  html[data-crx-zhihu-camo] .crx-camo-toc {
+    display: none !important;
+  }
+
+  html[data-crx-zhihu-camo] #root,
+  html[data-crx-zhihu-camo] .crx-camo-top,
+  html[data-crx-zhihu-camo] .crx-camo-footer {
+    margin-left: auto !important;
+  }
+}

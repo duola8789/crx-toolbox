@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "crx 工具箱",
   "version": "1.0",
-  "description": "页面小工具：静音控制台日志、京东订单一键评价",
+  "description": "页面小工具：静音控制台日志、京东订单一键评价、知乎伪装与图片精简",
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -25,12 +25,28 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.zhihu.com/*"],
+      "js": ["zhihu-camouflage.js"],
+      "css": ["zhihu-camouflage.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.zhihu.com/*"],
+      "js": ["image-hiding.js"],
+      "css": ["image-hiding.css"],
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
     {
       "resources": ["injected.js"],
       "matches": ["<all_urls>"]
+    },
+    {
+      "resources": ["src/assets/doc-icon.svg"],
+      "matches": ["*://*.zhihu.com/*"]
     }
   ],
   "icons": {
