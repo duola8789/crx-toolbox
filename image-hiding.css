@@ -1,0 +1,22 @@
+/* 精简图片：仅当开关打开时，按图片在页面上的渲染尺寸折叠大图。
+   只修改扩展自己的标记属性，不删除节点，也不碰 src / srcset；关闭开关后立即恢复。
+   阈值 400 × 300 与 spec 的「大图判定」一致，修改时需同步规格。 */
+html[data-crx-hide-large-images] img[data-crx-large-image] {
+  display: none !important;
+}
+
+/* 图片被折叠后，外层封面/插图容器往往还有固定高度；一并折叠，避免留下空白 */
+html[data-crx-hide-large-images]
+  :is(figure, .Image, .Image-wrapper, .RichContent-cover, .RichContent-cover-inner, .ContentItem-cover, .Video, .Video-player):has(img[data-crx-large-image]) {
+  display: none !important;
+}
+
+/* 兜底：只包着一张图的外层容器也一起折叠 */
+html[data-crx-hide-large-images] :is(div, a, figure):has(> img[data-crx-large-image]):not(:has(> :not(img))):not(:has(> img ~ img)) {
+  display: none !important;
+}
+
+/* 正文里承载被隐藏大图的顶层媒体块也折叠，避免固定高度的空占位 */
+html[data-crx-hide-large-images] :is(.RichContent, .Post-RichText, .RichText) > :has(img[data-crx-large-image]) {
+  display: none !important;
+}

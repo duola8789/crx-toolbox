@@ -73,7 +73,7 @@
         line-height: 1.3;
       }
 
-      /* 功能分组：两块能力互不相干，用分组标题在界面上也把这件事挑明 */
+      /* 功能分组：三块能力互不相干，用分组标题在界面上也把这件事挑明 */
       .group {
         margin-top: 14px;
       }
@@ -90,8 +90,9 @@
         letter-spacing: 0.05em;
       }
 
-      /* 通道组：三个日志级别共用一块面板，靠分隔线区分 */
-      .channels {
+      /* 通道组：三个日志级别共用一块面板，靠分隔线区分；知乎伪装组复用同一外框 */
+      .channels,
+      .options {
         margin: 0;
         border: 1px solid var(--line);
         border-radius: 10px;
@@ -222,6 +223,63 @@
 
       .channel:has(input:checked) .track::before {
         background: var(--mute);
+        transform: translate(14px, -50%);
+      }
+
+      /* 知乎伪装组：勾选 = 启用，和 console 的「静音」语义相反，
+         所以不复用 .channel 的选中态，单独一套强调色状态。 */
+      .option {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 40px;
+        padding: 0 12px 0 15px;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+
+      .option + .option {
+        border-top: 1px solid var(--line);
+      }
+
+      .option:hover {
+        background: var(--row-hover);
+      }
+
+      .option .rail {
+        height: 8px;
+        background: var(--mute);
+      }
+
+      .option:has(input:checked) .rail {
+        height: 18px;
+        background: var(--info);
+      }
+
+      /* 勾选不划掉、不变灰：这里的选中表示功能开启 */
+      .option .name::after,
+      .option:has(input:checked) .name::after {
+        transform: scaleX(0);
+      }
+
+      .option .track {
+        border-color: var(--line);
+        background: transparent;
+      }
+
+      .option .track::before {
+        background: var(--mute);
+        transform: translateY(-50%);
+      }
+
+      .option:has(input:checked) .track {
+        border-color: color-mix(in srgb, var(--info) 60%, transparent);
+        background: color-mix(in srgb, var(--info) 18%, transparent);
+      }
+
+      .option:has(input:checked) .track::before {
+        background: var(--info);
         transform: translate(14px, -50%);
       }
 
@@ -382,6 +440,30 @@
       </section>
 
       <section class="group">
+        <h2 class="group-title" id="pageDisplayGroupTitle">知乎伪装</h2>
+        <div class="options" role="group" aria-labelledby="pageDisplayGroupTitle">
+          <label class="option" title="将知乎页面显示为技术文档样式，仅在知乎生效">
+            <span class="rail" aria-hidden="true"></span>
+            <span class="name">文档视图</span>
+            <span class="switch">
+              <input type="checkbox" id="docViewToggle" role="switch" aria-label="启用文档视图（仅对知乎生效）" />
+              <span class="track" aria-hidden="true"></span>
+            </span>
+          </label>
+
+          <label class="option" title="隐藏知乎页面中显示尺寸较大的图片（宽 ≥ 400px 或高 ≥ 300px），仅在知乎生效">
+            <span class="rail" aria-hidden="true"></span>
+            <span class="name">精简图片</span>
+            <span class="switch">
+              <input type="checkbox" id="imageHideToggle" role="switch" aria-label="隐藏知乎页面中的大图：宽度不小于 400 像素或高度不小于 300 像素，仅在知乎生效" />
+              <span class="track" aria-hidden="true"></span>
+            </span>
+          </label>
+        </div>
+        <p class="note">悬停可查看每项说明</p>
+      </section>
+
+      <section class="group">
         <h2 class="group-title">京东订单</h2>
         <div class="action">
           <button id="jdBtn">
@@ -396,6 +478,8 @@
         <span id="logStatus">log: 已启用</span>
         <span id="infoStatus">info: 已启用</span>
         <span id="warnStatus">warn: 已启用</span>
+        <span id="docViewStatus">文档视图已关闭</span>
+        <span id="imageHideStatus">大图已显示</span>
         <span id="aiStatusText">AI 评语状态未知</span>
       </div>
     </main>

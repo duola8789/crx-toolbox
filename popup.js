@@ -38,6 +38,32 @@ document.addEventListener('DOMContentLoaded', function () {
     statusElements[method].textContent = isDisabled ? `${method}: 已禁用` : `${method}: 已启用`;
   }
 
+  // 知乎伪装：两个开关都只写存储，content script 通过 storage.onChanged 自行应用。
+  // 因此这里不需要 tabs.sendMessage，也不依赖当前标签页是否已注入脚本。
+  const displayOptions = [
+    { id: 'docViewToggle', key: 'zhihuCamouflageEnabled', statusId: 'docViewStatus', onText: '文档视图已开启', offText: '文档视图已关闭' },
+    { id: 'imageHideToggle', key: 'hideLargeImagesEnabled', statusId: 'imageHideStatus', onText: '大图已隐藏', offText: '大图已显示' },
+  ];
+
+  displayOptions.forEach(option => {
+    const toggle = document.getElementById(option.id);
+    const status = document.getElementById(option.statusId);
+    if (!toggle) return;
+
+    chrome.storage.local.get([option.key], function (result) {
+      const isOn = !!result[option.key];
+      toggle.checked = isOn;
+      if (status) status.textContent = isOn ? option.onText : option.offText;
+    });
+
+    toggle.addEventListener('change', function () {
+      const isOn = toggle.checked;
+      chrome.storage.local.set({ [option.key]: isOn }, function () {
+        if (status) status.textContent = isOn ? option.onText : option.offText;
+      });
+    });
+  });
+
   // 京东一键评价：只在 content.js 会响应的评价页可用，改动时须与 content.js 中 window.onload 的分支保持一致
   const JD_EVALUATE_PAGES = ['myJdcomments/myJdcomment', 'orderVoucher', 'saveCommentSuccess'];
 
